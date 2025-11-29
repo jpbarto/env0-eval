@@ -43,6 +43,36 @@ module "sns_topic" {
   tags = local.common_tags
 }
 
+# EKS Cluster Module
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "~> 20.0"
+
+  cluster_name    = "env0-eks-cluster"
+  cluster_version = "1.30"
+
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnets
+
+  # Cluster access entry
+  enable_cluster_creator_admin_permissions = true
+
+  cluster_endpoint_public_access = true
+
+  eks_managed_node_groups = {
+    default = {
+      min_size     = 2
+      max_size     = 4
+      desired_size = 2
+
+      instance_types = ["t3.medium"]
+      capacity_type  = "ON_DEMAND"
+    }
+  }
+
+  tags = local.common_tags
+}
+
 # Outputs
 output "vpc_id" {
   description = "The ID of the VPC"
@@ -67,4 +97,24 @@ output "sns_topic_arn" {
 output "sns_topic_name" {
   description = "The name of the SNS topic"
   value       = module.sns_topic.topic_name
+}
+
+output "eks_cluster_id" {
+  description = "The ID of the EKS cluster"
+  value       = module.eks.cluster_id
+}
+
+output "eks_cluster_endpoint" {
+  description = "Endpoint for EKS control plane"
+  value       = module.eks.cluster_endpoint
+}
+
+output "eks_cluster_security_group_id" {
+  description = "Security group ID attached to the EKS cluster"
+  value       = module.eks.cluster_security_group_id
+}
+
+output "eks_cluster_name" {
+  description = "The name of the EKS cluster"
+  value       = module.eks.cluster_name
 }
